@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Expense Tracker</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <div class="brand">💰 SpendSmart</div>
+
+    <nav>
+        <a href="#dashboard">🏠 Dashboard</a>
+        <a href="#transactions">💳 Transactions</a>
+        <a href="#budgets">📊 Analytics</a>
+        <a href="#reminders">🔔 Bill Reminders</a>
+        <a href="#goals">🎯 Savings Goals</a>
+        <a href="#tools">📁 Smart Tools</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+        <p>💚 Manage your money wisely</p>
+    </div>
+</div>
+
+<main>
+
+<header>
+    <div>
+        <p class="subtitle">PERSONAL FINANCE DASHBOARD</p>
+        <h1>Hello! Welcome back 👋</h1>
+        <p>Track your money, manage bills and achieve your goals.</p>
+    </div>
+
+    <button class="primary" onclick="openTransaction()">
+        + Add Transaction
+    </button>
+</header>
+
+<!-- DASHBOARD -->
+
+<section id="dashboard" class="stats">
+
+    <div class="card">
+        <p>Total Balance</p>
+        <h2 id="balance">₹0</h2>
+        <span>Income minus expenses</span>
+    </div>
+
+    <div class="card">
+        <p>Total Income</p>
+        <h2 id="income">₹0</h2>
+        <span class="green">Money received</span>
+    </div>
+
+    <div class="card">
+        <p>Total Expenses</p>
+        <h2 id="expenses">₹0</h2>
+        <span class="red">Money spent</span>
+    </div>
+
+    <div class="card">
+        <p>UPI Spending</p>
+        <h2 id="upiTotal">₹0</h2>
+        <span>UPI transactions</span>
+    </div>
+
+</section>
+
+<!-- CHARTS -->
+
+<section class="charts">
+
+    <div class="panel">
+        <h3>Income vs Expenses</h3>
+        <canvas id="overviewChart"></canvas>
+    </div>
+
+    <div class="panel">
+        <h3>Expense Categories</h3>
+        <canvas id="categoryChart"></canvas>
+    </div>
+
+</section>
+
+<!-- TRANSACTIONS -->
+
+<section class="panel" id="transactions">
+
+    <div class="section-header">
+        <div>
+            <h3>Recent Transactions</h3>
+            <p>View your income and expenses</p>
+        </div>
+
+        <div class="actions">
+            <input id="search" placeholder="Search transactions">
+            <button class="secondary" onclick="exportCSV()">Export CSV</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Payment</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="transactionRows"></tbody>
+        </table>
+
+    </div>
+
+</section>
+
+<!-- BILL REMINDERS -->
+
+<section class="panel" id="reminders">
+
+    <div class="section-header">
+        <div>
+            <h3>🔔 Bill Reminders</h3>
+            <p>Never forget to pay your bills</p>
+        </div>
+
+        <button class="primary" onclick="openReminder()">
+            + Add Reminder
+        </button>
+    </div>
+
+    <div class="reminder-grid" id="reminderList"></div>
+
+</section>
+
+<!-- SAVINGS GOALS -->
+
+<section class="panel" id="goals">
+
+    <div class="section-header">
+        <div>
+            <h3>🎯 Savings Goals</h3>
+            <p>Save money for things that matter</p>
+        </div>
+
+        <button class="primary" onclick="openGoal()">
+            + Create Goal
+        </button>
+    </div>
+
+    <div class="goal-grid" id="goalList"></div>
+
+</section>
+
+<!-- SMART TOOLS -->
+
+<section class="tools" id="tools">
+
+    <div class="panel">
+
+        <h3>🎤 Voice Expense Entry</h3>
+
+        <p>Speak to add a transaction.</p>
+
+        <button class="voice-button" onclick="startVoice()">
+            🎤 Start Speaking
+        </button>
+
+        <p id="voiceStatus" class="small"></p>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>📄 Receipt Scanner</h3>
+
+        <p>Upload or capture a receipt. OCR will try to extract text.</p>
+
+        <label class="upload-box">
+            📷 Scan / Upload Receipt
+            <input type="file" id="receiptFile"
+                   accept="image/*" capture="environment">
+        </label>
+
+        <div id="ocrStatus"></div>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>📁 Document Upload</h3>
+
+        <p>Upload bills, receipts or PDF documents.</p>
+
+        <label class="upload-box">
+            📁 Choose Files
+            <input type="file" id="documentFile"
+                   accept="image/*,.pdf,.doc,.docx">
+        </label>
+
+        <div id="fileInfo"></div>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>💳 UPI Payments</h3>
+
+        <p>Open your installed UPI application.</p>
+
+        <button class="primary" onclick="openUPI()">
+            Open UPI App
+        </button>
+
+        <p class="small">
+            This uses a UPI payment link. It does not access your
+            UPI transaction history or PIN.
+        </p>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>📥 Import UPI Statement</h3>
+
+        <p>Import a CSV statement to track transactions.</p>
+
+        <label class="upload-box">
+            Upload CSV Statement
+            <input type="file" id="statementFile" accept=".csv">
+        </label>
+
+    </div>
+
+    <div class="panel">
+
+        <h3>📊 Export Data</h3>
+
+        <p>Download your expense records.</p>
+
+        <button class="secondary" onclick="exportCSV()">
+            Download CSV
+        </button>
+
+    </div>
+
+</section>
+
+</main>
+
+<!-- TRANSACTION MODAL -->
+
+<div class="modal" id="transactionModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Add Transaction</h2>
+            <button onclick="closeModal('transactionModal')">✕</button>
+        </div>
+
+        <div class="tabs">
+            <button class="active" onclick="setType('expense',this)">Expense</button>
+            <button onclick="setType('income',this)">Income</button>
+            <button onclick="setType('transfer',this)">Transfer</button>
+        </div>
+
+        <form id="transactionForm">
+
+            <input type="hidden" id="transactionType" value="expense">
+
+            <label>Amount (₹)</label>
+            <input type="number" id="amount" required min="0.01"
+                   step="0.01" placeholder="Enter amount">
+
+            <label>Category</label>
+
+            <select id="category">
+                <option>Food</option>
+                <option>Travel</option>
+                <option>Shopping</option>
+                <option>Electricity</option>
+                <option>Water</option>
+                <option>Mobile Recharge</option>
+                <option>Internet</option>
+                <option>Rent</option>
+                <option>Education</option>
+                <option>Health</option>
+                <option>Entertainment</option>
+                <option>Salary</option>
+                <option>Other</option>
+            </select>
+
+            <label>Date</label>
+            <input type="date" id="date" required>
+
+            <label>Payment Method</label>
+
+            <select id="payment">
+                <option>UPI</option>
+                <option>Cash</option>
+                <option>Card</option>
+                <option>Bank Transfer</option>
+                <option>Other</option>
+            </select>
+
+            <label>UPI App / Account</label>
+            <input id="account" placeholder="Google Pay, PhonePe, Paytm">
+
+            <label>Description</label>
+            <input id="description" placeholder="What was this transaction for?">
+
+            <label>Attach Document</label>
+            <input type="file" id="attachment"
+                   accept="image/*,.pdf">
+
+            <div class="modal-actions">
+                <button type="button" class="secondary"
+                        onclick="closeModal('transactionModal')">
+                    Cancel
+                </button>
+
+                <button type="submit" class="primary">
+                    Save Transaction
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- REMINDER MODAL -->
+
+<div class="modal" id="reminderModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Add Bill Reminder</h2>
+            <button onclick="closeModal('reminderModal')">✕</button>
+        </div>
+
+        <form id="reminderForm">
+
+            <label>Bill Name</label>
+            <input id="billName" required
+                   placeholder="Electricity Bill">
+
+            <label>Amount (₹)</label>
+            <input id="billAmount" type="number"
+                   min="0" placeholder="850">
+
+            <label>Due Date</label>
+            <input id="billDate" type="date" required>
+
+            <label>Repeat</label>
+
+            <select id="billRepeat">
+                <option value="none">No repeat</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+
+            <div class="modal-actions">
+                <button type="button" class="secondary"
+                        onclick="closeModal('reminderModal')">
+                    Cancel
+                </button>
+
+                <button type="submit" class="primary">
+                    Save Reminder
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- SAVINGS GOAL MODAL -->
+
+<div class="modal" id="goalModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Create Savings Goal</h2>
+            <button onclick="closeModal('goalModal')">✕</button>
+        </div>
+
+        <form id="goalForm">
+
+            <label>Goal Name</label>
+            <input id="goalName" required
+                   placeholder="Buy a new phone">
+
+            <label>Target Amount (₹)</label>
+            <input id="goalTarget" type="number"
+                   min="1" required placeholder="20000">
+
+            <label>Initial Savings (₹)</label>
+            <input id="goalSaved" type="number"
+                   min="0" value="0">
+
+            <label>Target Date</label>
+            <input id="goalDate" type="date">
+
+            <div class="modal-actions">
+                <button type="button" class="secondary"
+                        onclick="closeModal('goalModal')">
+                    Cancel
+                </button>
+
+                <button type="submit" class="primary">
+                    Create Goal
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- ADD SAVINGS MODAL -->
+
+<div class="modal" id="contributeModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Add Savings</h2>
+            <button onclick="closeModal('contributeModal')">✕</button>
+        </div>
+
+        <form id="contributeForm">
+
+            <input type="hidden" id="contributeGoalId">
+
+            <label>Amount (₹)</label>
+            <input id="contributeAmount" type="number"
+                   min="1" required>
+
+            <div class="modal-actions">
+                <button type="button" class="secondary"
+                        onclick="closeModal('contributeModal')">
+                    Cancel
+                </button>
+
+                <button type="submit" class="primary">
+                    Add Savings
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
